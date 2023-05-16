@@ -14,13 +14,13 @@ const initialValues = {
   searchQuery: '',
 };
 
-export const Searchbar = props => {
+export const Searchbar = ({onSubmit}) => {
   const handleSumbit = (value, actions) => {
     if (value.searchQuery.trim() === '') {
        toast.error(NOTIFICATION.noInfoToSearch);
       return;
     }
-    props.onSubmit(value.searchQuery);
+    onSubmit(value.searchQuery);
     actions.resetForm();
   };
 

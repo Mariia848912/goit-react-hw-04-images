@@ -5,19 +5,19 @@ import PropTypes from 'prop-types';
 
 const modalRoot = document.querySelector('#modal-root');
 
-export function Modal(props) {
-  const { largeImageURL, alt, onClose } = props;
+export function Modal({largeImageURL, alt, onClose}) {
   
   useEffect(() => {
-   window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  });
-
-  const handleKeyDown = e => {
+    const handleKeyDown = e => {
+        console.log("hello");
     if (e.code === 'Escape') {
       onClose();
     }
-  };
+    };
+    
+   window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const handleOverlayClick = e => {
     if (e.target === e.currentTarget) {

@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { Container } from './Container/Container';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ToastContainer, toast } from 'react-toastify';
@@ -9,113 +9,84 @@ import { Button } from './Button/Button';
 import { Loader } from './Loader/Loader';
 import { Modal } from './Modal/Modal';
 import { ErrorText } from './ErrorText/ErrorText';
+import { NOTIFICATION } from '../constants/notification';
 
-const notification = {
-  error: 'Whoops, something went wrong',
-  noInfoInTheGallery:
-    'Sorry, there are no images matching your search query. Please try again.',
-  noInfoToSearch: 'Enter data to search for pictures',
-};
-export class App extends Component {
-  state = {
-    pictures: [],
-    searchQuery: '',
-    page: 1,
-    totalHits: null,
-    isloading: false,
-    showModal: false,
-    selectedPicture: null,
-    error: null,
-  };
+export function App() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [pictures, setPictures] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(null);
+  const [isloading, setLoading] = useState(false);
+  const [showModal, setshowModal] = useState(false);
+  const [selectedPicture, setSelectedPicture] = useState(null);
+  const [error, setError] = useState(null);
 
-  componentDidUpdate(_, prevState) {
-    const { searchQuery, page } = this.state;
-
-    if (prevState.searchQuery !== searchQuery || prevState.page !== page) {
-      this.setState({ isloading: true });
-      this.fetchPictures(searchQuery, page);
+  useEffect(() => {
+    if (!searchQuery) {
+      return;
     }
-  }
+    setLoading(true);
+    fetchPictures(searchQuery, page);
+  }, [searchQuery, page]);
 
-  fetchPictures = async (searchQuery, page) => {
+  const fetchPictures = async (searchQuery, page) => {
     try {
-      this.setState({ isloading: true });
+      setLoading(true);
       const info = await getPictures(searchQuery, page);
 
       if (info.hits.length === 0) {
-        return toast.error(notification.noInfoInTheGallery);
+        return toast.error(NOTIFICATION.noInfoInTheGallery);
       }
-      
-      this.setState(prevState => ({
-        pictures: [...prevState.pictures, ...info.hits],
-        totalHits: info.totalHits,
-      }));
+      setTotalHits(info.totalHits);
+      setPictures(prevContacts => [...prevContacts, ...info.hits]);
     } catch (error) {
-      this.setState({ error });
+      setError({ error });
     } finally {
-      this.setState({ isloading: false });
+      setLoading(false);
     }
   };
-  handleFormSubmit = searchQuery => {
-    if (searchQuery.trim() === '') {
-      toast.error(notification.noInfoToSearch);
-      return;
-    }
-    this.setState({ searchQuery, page: 1, pictures: [] });
+  const handleFormSubmit = searchQuery => {
+    setSearchQuery(searchQuery);
+    setPage(1);
+    setPictures([]);
   };
 
-  onLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const onLoadMore = () => {
+    setPage(page + 1);
   };
 
-  onShowModal = (largeImageURL, tags) => {
-    this.setState({
-      showModal: true,
-      selectedPicture: { largeImageURL, tags },
-    });
+  const onShowModal = (largeImageURL, tags) => {
+    setshowModal(true);
+    setSelectedPicture({ largeImageURL, tags });
   };
 
-  onCloseModal = () => {
-    this.setState({
-      showModal: false,
-      selectedPicture: null,
-    });
+  const onCloseModal = () => {
+    setshowModal(false);
+    setSelectedPicture(null);
   };
 
-  render() {
-    const {
-      pictures,
-      isloading,
-      showModal,
-      selectedPicture,
-      totalHits,
-      error,
-    } = this.state;
-    const checkEndList = totalHits / pictures.length;
+  const checkEndList = totalHits / pictures.length;
+  return (
+    <Container>
+      <Searchbar onSubmit={handleFormSubmit} />
 
-    return (
-      <Container>
-        <Searchbar onSubmit={this.handleFormSubmit} />
-
-        {pictures.length > 0 && (
-          <ImageGallery pictures={pictures} onShowModal={this.onShowModal} />
-        )}
-        {pictures.length > 0 && !isloading && checkEndList > 1 && (
-          <Button onClick={this.onLoadMore} />
-        )}
-        {isloading && <Loader />}
-        {showModal && (
-          <Modal
-            largeImageURL={selectedPicture.largeImageURL}
-            alt={selectedPicture.tags}
-            onClose={this.onCloseModal}
-          />
-        )}
-        {error && <ErrorText/>}
-        <ToastContainer autoClose={3000} />
-      </Container>
-    );
-  }
+      {pictures.length > 0 && (
+        <ImageGallery pictures={pictures} onShowModal={onShowModal} />
+      )}
+      {pictures.length > 0 && !isloading && checkEndList > 1 && (
+        <Button onClick={onLoadMore} />
+      )}
+      {isloading && <Loader />}
+      {showModal && (
+        <Modal
+          largeImageURL={selectedPicture.largeImageURL}
+          alt={selectedPicture.tags}
+          onClose={onCloseModal}
+        />
+      )}
+      {error && <ErrorText />}
+      <ToastContainer autoClose={3000} />
+    </Container>
+  );
 }
+

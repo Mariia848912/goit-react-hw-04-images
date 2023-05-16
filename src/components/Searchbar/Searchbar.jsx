@@ -7,6 +7,8 @@ import {
 } from './Searchbar.styled';
 import { Formik } from 'formik';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
+import { NOTIFICATION } from "../../constants/notification";
 
 const initialValues = {
   searchQuery: '',
@@ -14,6 +16,10 @@ const initialValues = {
 
 export const Searchbar = props => {
   const handleSumbit = (value, actions) => {
+    if (value.searchQuery.trim() === '') {
+       toast.error(NOTIFICATION.noInfoToSearch);
+      return;
+    }
     props.onSubmit(value.searchQuery);
     actions.resetForm();
   };
